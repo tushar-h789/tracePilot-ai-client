@@ -60,3 +60,15 @@ export function removeMember(orgId: string, userId: string, options: BrowserRequ
     method: "DELETE",
   })
 }
+
+export function renameOrganization(
+  orgId: string,
+  name: string,
+  options: BrowserRequestOptions = {},
+) {
+  return browserApi<OrganizationOut>(`/organizations/${enc(orgId)}`, {
+    ...options,
+    method: "PATCH",
+    json: { name },
+  })
+}
