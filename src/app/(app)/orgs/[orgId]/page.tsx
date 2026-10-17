@@ -1,19 +1,23 @@
-"use client"
-
-import { useParams } from "next/navigation"
+import type { Metadata } from "next"
 import { Suspense } from "react"
 
-import { OrgDashboard } from "@/components/dashboard/org-dashboard"
+import { OrgDashboardFromParams } from "@/components/dashboard/org-dashboard"
+import { SystemStatus } from "@/components/system-status/system-status"
+import { SystemStatusSkeleton } from "@/components/system-status/system-status-view"
 
-function Inner() {
-  const params = useParams<{ orgId: string }>()
-  return <OrgDashboard orgId={params.orgId} />
-}
+export const metadata: Metadata = { title: "Dashboard" }
 
 export default function OrgDashboardPage() {
   return (
-    <Suspense>
-      <Inner />
-    </Suspense>
+    <div className="space-y-6">
+      <Suspense>
+        <OrgDashboardFromParams />
+      </Suspense>
+      <section aria-label="System status" className="max-w-md">
+        <Suspense fallback={<SystemStatusSkeleton />}>
+          <SystemStatus />
+        </Suspense>
+      </section>
+    </div>
   )
 }

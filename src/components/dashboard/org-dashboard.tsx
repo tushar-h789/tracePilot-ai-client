@@ -2,6 +2,7 @@
 
 import { FolderKanbanIcon, RefreshCwIcon } from "lucide-react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useState } from "react"
 
 import { type Column, SortableTable } from "@/components/data-table/sortable-table"
@@ -226,4 +227,10 @@ export function OrgDashboard({ orgId }: { orgId: string }) {
       </div>
     </div>
   )
+}
+
+/** Reads `orgId` from the route; lets the (server) page stay free of client hooks. */
+export function OrgDashboardFromParams() {
+  const params = useParams<{ orgId: string }>()
+  return <OrgDashboard orgId={params.orgId} />
 }

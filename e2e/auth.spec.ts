@@ -88,9 +88,10 @@ test("register, sign in, create an organization, sign out", async ({ page, conte
     expect(sess).toHaveLength(0)
   })
 
-  await test.step("overview inside the authenticated shell", async () => {
+  await test.step("/overview forwards to the last org's dashboard with system status", async () => {
     await page.goto("/overview")
-    await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible()
+    await expect(page).toHaveURL(/\/orgs\/[0-9a-f-]+$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible()
     await expect(page.getByText("All systems ready")).toBeVisible()
   })
 
