@@ -128,3 +128,58 @@ Branch `phase-2/identity-access`, stacked on `phase-1/foundation` (PR base `phas
 ### Next (Phase 3)
 
 Project pages and ingestion keys on top of the org scope.
+
+## Phase 3: projects and ingestion keys (2026-10-17)
+
+Committed directly to `main` (as the user instructed for Phase 3). Server-side design: server repo
+ADR-021/022, SECURITY §11.
+
+### Delivered
+
+- Regenerated `schema.d.ts` from the Phase 3 OpenAPI. New aliases in `types.ts`, plus
+  `src/lib/api/projects.ts` covering projects, ingestion keys, archive/restore, rotate and revoke.
+- `/orgs/[orgId]/projects`:
+  - list with "show archived" and cursor "Load more";
+  - create form (owner/admin) with slug, environment and retention validation that mirrors the server;
+  - archive with confirmation, and restore;
+  - loading, empty, not-found and error states.
+- `/orgs/[orgId]/projects/[projectId]`:
+  - edit form (owner/admin; server field errors mapped onto inputs; read-only while archived);
+  - archive/restore card;
+  - **ingestion key manager**.
+- Ingestion key manager:
+  - create opens a modal (`KeyRevealDialog`) that shows the key once, with copy, a warning and an
+    "I have saved the key" button;
+  - the table shows name, prefix, status, created, last used and expiry;
+  - revoke (confirmation, immediate) and rotate (confirmation, new key shown once);
+  - "show revoked and expired" toggle.
+  - The plaintext exists only in component state and is dropped on close.
+- Role-aware UI (`canManageProjects`, `canManageKeys`, `canReadKeys`) matches the server matrix: members read key
+  metadata, viewers see no keys.
+- Links: org list → Projects; Members ↔ Projects.
+- New `ui/dialog.tsx` (Base UI dialog).
+
+### Results (executed locally)
+
+| Check                           | Result                                                               |
+| ------------------------------- | -------------------------------------------------------------------- |
+| lint / typecheck / format:check | clean                                                                |
+| Vitest + coverage               | 84 passed in 11 files (25 new); 87.41 % statements, 85.05 % branches |
+| check:api                       | `schema.d.ts` matches the server's `openapi.json`                    |
+| build (1 worker)                | passed; machine total peak 21.6 GB (cap 21.9 GB)                     |
+| Playwright E2E (real API)       | 6/6 passed, including the new `projects.spec.ts`                     |
+
+`projects.spec.ts` covers:
+
+- create a project in the UI;
+- create a key, which is shown once in the modal;
+- the key is absent from the DOM and web storage after closing and after a reload;
+- the key ingests with no cookies (202);
+- revoke in the UI with confirmation;
+- the same key now gets a generic 401.
+
+### Known limitations
+
+- No logs explorer yet (Phase 4).
+- Rotation from the UI always uses a zero grace period. The API supports `grace_seconds` up to 24 h.
+- The browser confirmations use `window.confirm` (consistent with the members page).
