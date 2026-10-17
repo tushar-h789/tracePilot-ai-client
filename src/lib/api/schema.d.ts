@@ -4,6 +4,142 @@
  */
 
 export interface paths {
+  "/api/v1/auth/csrf": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Issue a CSRF token (sets cookie) */
+    get: operations["issue_csrf_api_v1_auth_csrf_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/login": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Log in (sets HttpOnly session cookie + rotated CSRF cookie) */
+    post: operations["login_api_v1_auth_login_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/logout": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Log out (revokes the session server-side; idempotent) */
+    post: operations["logout_api_v1_auth_logout_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/logout-all": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Revoke every session of the current user */
+    post: operations["logout_all_api_v1_auth_logout_all_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/me": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Current user */
+    get: operations["me_api_v1_auth_me_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/register": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Register (generic response; never reveals whether the email exists) */
+    post: operations["register_api_v1_auth_register_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/sessions": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List my active sessions */
+    get: operations["list_sessions_api_v1_auth_sessions_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/auth/sessions/{session_id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Revoke one of my sessions */
+    delete: operations["revoke_session_api_v1_auth_sessions__session_id__delete"]
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/health/live": {
     parameters: {
       query?: never
@@ -41,10 +177,141 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/organizations": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List my organizations */
+    get: operations["list_organizations_api_v1_organizations_get"]
+    put?: never
+    /** Create an organization (the creator becomes owner) */
+    post: operations["create_organization_api_v1_organizations_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/organizations/{org_id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get one of my organizations */
+    get: operations["get_organization_api_v1_organizations__org_id__get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/organizations/{org_id}/audit-logs": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Recent audit events for the organization (admin+) */
+    get: operations["list_audit_logs_api_v1_organizations__org_id__audit_logs_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/organizations/{org_id}/members": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List members */
+    get: operations["list_members_api_v1_organizations__org_id__members_get"]
+    put?: never
+    /** Add an existing user by email (admin+; only owners may grant owner) */
+    post: operations["add_member_api_v1_organizations__org_id__members_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/organizations/{org_id}/members/{user_id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** Remove a member */
+    delete: operations["remove_member_api_v1_organizations__org_id__members__user_id__delete"]
+    options?: never
+    head?: never
+    /** Change a member's role */
+    patch: operations["change_member_role_api_v1_organizations__org_id__members__user_id__patch"]
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
+    /** AuditLogListResponse */
+    AuditLogListResponse: {
+      /** Items */
+      items: components["schemas"]["AuditLogOut"][]
+    }
+    /** AuditLogOut */
+    AuditLogOut: {
+      /** Action */
+      action: string
+      /** Actor User Id */
+      actor_user_id: string | null
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Metadata */
+      metadata: {
+        [key: string]: unknown
+      }
+      /** Target Id */
+      target_id: string | null
+      /** Target Type */
+      target_type: string | null
+    }
+    /**
+     * CsrfResponse
+     * @description The token is also set as the readable CSRF cookie; send it back in `X-CSRF-Token`.
+     */
+    CsrfResponse: {
+      /** Csrf Token */
+      csrf_token: string
+      /**
+       * Header Name
+       * @default X-CSRF-Token
+       */
+      header_name: string
+    }
     /** DependencyCheck */
     DependencyCheck: {
       /**
@@ -58,6 +325,20 @@ export interface components {
        */
       status: "ok" | "error"
     }
+    /** FieldError */
+    FieldError: {
+      /** Loc */
+      loc: (string | number)[]
+      /** Msg */
+      msg: string
+      /** Type */
+      type?: string | null
+    }
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components["schemas"]["ValidationError"][]
+    }
     /** LivenessResponse */
     LivenessResponse: {
       /**
@@ -66,6 +347,116 @@ export interface components {
        * @constant
        */
       status: "ok"
+    }
+    /** LoginRequest */
+    LoginRequest: {
+      /** Email */
+      email: string
+      /** Password */
+      password: string
+    }
+    /** LogoutAllResponse */
+    LogoutAllResponse: {
+      /** Revoked Sessions */
+      revoked_sessions: number
+    }
+    /** MeResponse */
+    MeResponse: {
+      session: components["schemas"]["SessionInfo"]
+      user: components["schemas"]["UserOut"]
+    }
+    /** MemberAdd */
+    MemberAdd: {
+      /** Email */
+      email: string
+      /** @default member */
+      role: components["schemas"]["Role"]
+    }
+    /** MemberListResponse */
+    MemberListResponse: {
+      /** Items */
+      items: components["schemas"]["MemberOut"][]
+    }
+    /** MemberOut */
+    MemberOut: {
+      /** Display Name */
+      display_name: string
+      /** Email */
+      email: string
+      /**
+       * Joined At
+       * Format: date-time
+       */
+      joined_at: string
+      role: components["schemas"]["Role"]
+      /**
+       * User Id
+       * Format: uuid
+       */
+      user_id: string
+    }
+    /** MemberUpdate */
+    MemberUpdate: {
+      role: components["schemas"]["Role"]
+    }
+    /** MessageResponse */
+    MessageResponse: {
+      /** Detail */
+      detail: string
+    }
+    /** OrganizationCreate */
+    OrganizationCreate: {
+      /** Name */
+      name: string
+    }
+    /** OrganizationListResponse */
+    OrganizationListResponse: {
+      /** Items */
+      items: components["schemas"]["OrganizationOut"][]
+    }
+    /** OrganizationOut */
+    OrganizationOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Name */
+      name: string
+      /** @description The caller's role in this organization */
+      role: components["schemas"]["Role"]
+      /** Slug */
+      slug: string
+    }
+    /**
+     * Problem
+     * @description RFC 9457 problem details (application/problem+json).
+     */
+    Problem: {
+      /** Code */
+      code?: string | null
+      /** Detail */
+      detail: string
+      /** Errors */
+      errors?: components["schemas"]["FieldError"][] | null
+      /** Request Id */
+      request_id?: string | null
+      /** Status */
+      status: number
+      /** Title */
+      title: string
+      /**
+       * Type
+       * @default about:blank
+       */
+      type: string
+    } & {
+      [key: string]: unknown
     }
     /** ReadinessChecks */
     ReadinessChecks: {
@@ -81,6 +472,94 @@ export interface components {
        */
       status: "ok" | "unavailable"
     }
+    /** RegisterRequest */
+    RegisterRequest: {
+      /** Display Name */
+      display_name?: string | null
+      /** Email */
+      email: string
+      /** Password */
+      password: string
+    }
+    /**
+     * Role
+     * @enum {string}
+     */
+    Role: "owner" | "admin" | "member" | "viewer"
+    /** SessionInfo */
+    SessionInfo: {
+      /**
+       * Expires At
+       * Format: date-time
+       */
+      expires_at: string
+      /** Idle Timeout Seconds */
+      idle_timeout_seconds: number
+    }
+    /** SessionListResponse */
+    SessionListResponse: {
+      /** Items */
+      items: components["schemas"]["SessionOut"][]
+    }
+    /** SessionOut */
+    SessionOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string
+      /** Current */
+      current: boolean
+      /**
+       * Expires At
+       * Format: date-time
+       */
+      expires_at: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Ip Address */
+      ip_address: string | null
+      /**
+       * Last Seen At
+       * Format: date-time
+       */
+      last_seen_at: string
+      /** User Agent */
+      user_agent: string | null
+    }
+    /** UserOut */
+    UserOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string
+      /** Display Name */
+      display_name: string
+      /** Email */
+      email: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+    }
+    /** ValidationError */
+    ValidationError: {
+      /** Context */
+      ctx?: Record<string, never>
+      /** Input */
+      input?: unknown
+      /** Location */
+      loc: (string | number)[]
+      /** Message */
+      msg: string
+      /** Error Type */
+      type: string
+    }
   }
   responses: never
   parameters: never
@@ -90,6 +569,350 @@ export interface components {
 }
 export type $defs = Record<string, never>
 export interface operations {
+  issue_csrf_api_v1_auth_csrf_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["CsrfResponse"]
+        }
+      }
+    }
+  }
+  login_api_v1_auth_login_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LoginRequest"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["MeResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"]
+        }
+      }
+      /** @description Rate limited (see Retry-After) */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Dependency unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  logout_api_v1_auth_logout_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  logout_all_api_v1_auth_logout_all_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["LogoutAllResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  me_api_v1_auth_me_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["MeResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  register_api_v1_auth_register_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RegisterRequest"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["MessageResponse"]
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Rate limited (see Retry-After) */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Dependency unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  list_sessions_api_v1_auth_sessions_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["SessionListResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  revoke_session_api_v1_auth_sessions__session_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        session_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"]
+        }
+      }
+    }
+  }
   live_api_v1_health_live_get: {
     parameters: {
       query?: never
@@ -135,6 +958,478 @@ export interface operations {
         }
         content: {
           "application/json": components["schemas"]["ReadinessResponse"]
+        }
+      }
+    }
+  }
+  list_organizations_api_v1_organizations_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["OrganizationListResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  create_organization_api_v1_organizations_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OrganizationCreate"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["OrganizationOut"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  get_organization_api_v1_organizations__org_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["OrganizationOut"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"]
+        }
+      }
+    }
+  }
+  list_audit_logs_api_v1_organizations__org_id__audit_logs_get: {
+    parameters: {
+      query?: {
+        limit?: number
+      }
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["AuditLogListResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"]
+        }
+      }
+    }
+  }
+  list_members_api_v1_organizations__org_id__members_get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["MemberListResponse"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"]
+        }
+      }
+    }
+  }
+  add_member_api_v1_organizations__org_id__members_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MemberAdd"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["MemberOut"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  remove_member_api_v1_organizations__org_id__members__user_id__delete: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        user_id: string
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"]
+        }
+      }
+    }
+  }
+  change_member_role_api_v1_organizations__org_id__members__user_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        user_id: string
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["MemberUpdate"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["MemberOut"]
+        }
+      }
+      /** @description Not authenticated */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
         }
       }
     }
