@@ -3,10 +3,10 @@
 Next.js web application for **TracePilot AI**, an AI-assisted application observability and incident
 investigation platform (portfolio MVP).
 
-> Status: **Phase 2 — identity and access**: sign in / register (React Hook Form + Zod), cookie-only sessions
-> through a same-origin `/api/v1` proxy with automatic CSRF headers, server-side auth check for app pages, sign
-> out, organization list/create and a members page with role-based controls. Built on the Phase 1 foundation
-> (app shell, system status widget, generated API types, tests, CI).
+> Status: **Phase 4: log explorer, analytics and product UI.** Org and project dashboards (stat cards and
+> accessible Recharts charts), a logs explorer (filters, full-text search, cursor "Load more", detail drawer), a
+> collapsible sidebar with breadcrumbs and a project switcher. Built on Phases 1–3: cookie sessions through a
+> same-origin `/api/v1` proxy, organizations, members, projects and ingestion keys.
 
 Canonical docs (requirements, architecture, security, ADRs) live in the server repo:
 [tracePilot-ai-server/docs](https://github.com/tushar-h789/tracePilot-ai-server/tree/phase-1/foundation/docs).
@@ -54,7 +54,7 @@ bun run dev                         # http://localhost:3100 → /register, then 
 
 - `/orgs/[orgId]/projects` lists projects newest first, with an "include archived" filter and "Load more"
   (cursor pagination). Owners and admins can create, archive and restore projects.
-- `/orgs/[orgId]/projects/[projectId]` is the project settings page: edit (owner/admin) and archive/restore. It also
+- `/orgs/[orgId]/projects/[projectId]/settings` (the project root until Phase 4) is the project settings page: edit (owner/admin) and archive/restore. It also
   holds **ingestion key management**:
   - **Create** opens a modal that shows the key once, with a copy button and a warning. The plaintext lives
     only in React state and is dropped when the modal closes. It is never stored in web storage, the URL or logs.
@@ -65,7 +65,44 @@ bun run dev                         # http://localhost:3100 → /register, then 
 - The proxy does **not** forward `Authorization`, so the browser cannot call `POST /ingest/logs`. Services send logs
   straight to the API with the SDK (`../tracePilot-ai-server/packages/python-sdk`).
 
-The overview page shows **System status** from `GET /api/v1/health/ready` (ok / degraded / unreachable).
+### Dashboards and logs explorer (Phase 4)
+
+Routes (all under the authenticated shell):
+
+| Route                                           | What it shows                                                                                                         |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `/orgs/[orgId]`                                 | Org dashboard: totals across active projects, requests/errors chart, per-project table, recent errors                 |
+| `/orgs/[orgId]/projects/[projectId]`            | Project overview: stat cards, requests/errors and p95 charts, per-service table, recent errors, incidents placeholder |
+| `/orgs/[orgId]/projects/[projectId]/logs`       | Logs explorer                                                                                                         |
+| `/orgs/[orgId]/projects/[projectId]/settings`   | Project settings and ingestion keys (moved from the project root)                                                     |
+| `/orgs/[orgId]/settings`                        | Rename the organization (owner/admin)                                                                                 |
+| `/overview`, `/logs`, `/incidents`, `/settings` | Forward to the last-used org/project, or to `/orgs`                                                                   |
+
+- **Metrics** come from the server's `/metrics/*` endpoints; definitions are in the server's
+  [docs/METRICS.md](https://github.com/tushar-h789/tracePilot-ai-server/blob/main/docs/METRICS.md). Each stat card
+  has an info button that explains the calculation and links there. When the API returns `null` (no requests, no
+  latency samples, or fewer than 20 samples), the card shows "—" and the reason.
+- **Charts** (Recharts) are `role="img"` figures with a title, a screen-reader summary and a "Show data table"
+  fallback. Errors are drawn dashed, so color is never the only signal.
+- **Logs explorer**:
+  - time presets (15m–30d) or a custom range (max 30 days);
+  - level and service multi-selects with counts from `/logs/facets`;
+  - environment, trace id and request id filters;
+  - full-text search debounced by 350 ms.
+  - Every filter lives in the URL (`?range=1h&level=error&service=api&q=timeout&log=123`), so views can be shared
+    and the back button works.
+  - Pages hold 50 rows; "Load more" follows `next_cursor` with the same frozen time window. The UI never fetches
+    all logs.
+  - The detail drawer shows every field. Attributes are rendered as `JSON.stringify` text inside `<pre>` (no
+    `dangerouslySetInnerHTML`).
+- Every view has loading skeletons, empty states (with SDK and CLI snippets when nothing has been ingested) and
+  error states with a retry button.
+- **Layout**:
+  - the sidebar collapses to icons (remembered in `localStorage`, key `tp:sidebar-collapsed`);
+  - on mobile it becomes a drawer;
+  - breadcrumbs and a project switcher keep the current section.
+
+The org dashboard (`/orgs/[orgId]`, where `/overview` forwards) shows **System status** from `GET /api/v1/health/ready` (ok / degraded / unreachable).
 
 ## Scripts
 
@@ -90,9 +127,9 @@ src/
   app/
     (auth)/{login,register}/ # sign-in / registration pages
     (app)/layout.tsx         # server-side auth check + shared shell (sidebar, top bar, sign out)
-    (app)/{overview,logs,incidents,settings}/page.tsx
-    (app)/orgs/              # organization list/create; [orgId]/members (role-based controls)
-    (app)/orgs/[orgId]/projects/            # project list/create/archive; [projectId] = settings + keys
+    (app)/{overview,logs,incidents,settings}/page.tsx  # forward to the last-used org/project
+    (app)/orgs/              # organization list/create; [orgId] = org dashboard, members, settings
+    (app)/orgs/[orgId]/projects/            # project list; [projectId] = overview, logs, incidents, settings
     api/v1/[...path]/        # same-origin proxy to the API
   proxy.ts                   # optimistic redirect to /login when the session cookie is missing
     loading.tsx, error.tsx, not-found.tsx, healthz/route.ts
@@ -100,7 +137,11 @@ src/
     ui/                      # shadcn primitives (button, card, badge, input, label, alert, …)
     auth/, organizations/    # forms, logout button, current-user context, org + members views
     projects/                # project form/list/settings, ingestion key manager, one-time key dialog
-    layout/                  # app shell, sidebar nav, mobile nav, breadcrumbs, page header
+    layout/                  # app shell, collapsible sidebar, mobile drawer, breadcrumbs, project switcher
+    workspace/               # current org/project context from the URL
+    dashboard/, metrics/     # org/project dashboards, stat cards, accessible charts, range picker
+    logs/                    # logs explorer, filters, search, detail drawer
+    data-table/              # sortable table (aria-sort)
     system-status/           # server component + presentational view
     empty-state.tsx, route-error.tsx
   lib/api/
@@ -109,7 +150,8 @@ src/
     schema.d.ts              # GENERATED by openapi-typescript — do not edit
     types.ts, health.ts
     browser.ts, csrf.ts      # browser client: credentials include + automatic CSRF header
-    auth.ts, organizations.ts, projects.ts
+    auth.ts, organizations.ts, projects.ts, logs.ts, metrics.ts, query.ts
+  lib/time-range.ts, format.ts, metric-docs.ts
   lib/auth/                  # Zod schemas, roles, safe redirects, server-side getCurrentUser
 tests/unit/                  # Vitest
 e2e/                         # Playwright

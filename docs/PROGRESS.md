@@ -183,3 +183,73 @@ ADR-021/022, SECURITY §11.
 - No logs explorer yet (Phase 4).
 - Rotation from the UI always uses a zero grace period. The API supports `grace_seconds` up to 24 h.
 - The browser confirmations use `window.confirm` (consistent with the members page).
+
+## Phase 4: log explorer, analytics and product UI (2026-10-17)
+
+Committed directly to `main`.
+
+### Delivered
+
+- **Design tokens**: indigo primary and chart palette; `success` / `warning` / `info` / `danger` status tokens for
+  light and dark themes.
+- **Shell**:
+  - collapsible desktop sidebar (icon rail, remembered in `localStorage`) and a mobile drawer;
+  - org and project sections in the navigation;
+  - breadcrumbs (Organizations / org / project / page);
+  - a project switcher that keeps the current section;
+  - legacy `/overview`, `/logs`, `/incidents` and `/settings` forward to the last-used org or project.
+- **Org dashboard** (`/orgs/[orgId]`): totals across active projects, a requests/errors chart, a sortable
+  per-project table, recent errors, the incidents placeholder ("Incidents arrive in Phase 5") and system status.
+- **Project overview**: stat cards (requests, errors, error rate, p50/p95/p99), requests/errors and p95 charts,
+  a sortable per-service table and recent errors. An empty project shows SDK and CLI ingestion guidance.
+- **Metric honesty**:
+  - a `null` metric renders "—" with the server's reason (no requests, no latency samples, fewer than 20 samples);
+  - every card has an info popover with the formula and a link to the server's `docs/METRICS.md`.
+- **Charts** (Recharts 3): `figure` + `role="img"`, a title, a screen-reader summary and a "Show data table"
+  fallback. Errors are drawn dashed, so color is never the only signal.
+- **Logs explorer**:
+  - range presets 15m–30d, or a custom range (validated, max 30 days);
+  - level and service multi-selects with facet counts;
+  - environment, trace id and request id filters;
+  - full-text search debounced by 350 ms.
+  - Every filter is synced to the URL.
+  - Pages of 50 with "Load more" (cursor, frozen time window); it never fetches all logs.
+  - A detail drawer, deep-linkable with `?log=`, shows attributes as escaped JSON text (no
+    `dangerouslySetInnerHTML`).
+- **Org settings**: rename the organization (owner/admin); others see it read-only.
+- **States**: skeletons everywhere, empty states, and error states with a Retry button.
+
+### Results (executed locally, 2026-10-17)
+
+| Check                                          | Result                                                                                                                                                                                                                  |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| format:check / lint / typecheck                | clean                                                                                                                                                                                                                   |
+| Vitest + coverage                              | 129 passed in 16 files (45 new); 87.06 % statements, 82.66 % branches, 83.24 % functions, 88.01 % lines                                                                                                                 |
+| check:api                                      | `schema.d.ts` matches the server's `openapi.json`                                                                                                                                                                       |
+| bun audit (high)                               | passed                                                                                                                                                                                                                  |
+| build                                          | passed in two steps: `next build --experimental-build-mode=compile`, then `--experimental-build-mode=generate`. Each stayed under its memory cap; a single `next build` was OOM-killed under the ~0.9 GB cap available. |
+| Playwright E2E (real API, Phase 4 server code) | 8/8 passed, including the new `dashboard.spec.ts` (2 tests)                                                                                                                                                             |
+| gitleaks (full history)                        | no leaks                                                                                                                                                                                                                |
+
+`dashboard.spec.ts`:
+
+1. Registers, creates an org, a project and an ingestion key in the UI.
+2. Ingests 120 synthetic events (12 errors, 3 services) with the key only.
+3. Checks the org dashboard shows 120 requests, 12 errors and a 10.0 % error rate, and the project overview shows
+   cards, charts with a table fallback, and per-service rows.
+4. Logs explorer:
+   - level=error gives 12 rows;
+   - service=search gives 40 rows;
+   - a debounced, case-insensitive search gives 12 rows;
+   - "Load more" twice reaches 120 rows and "end of results";
+   - the detail drawer shows the attributes JSON and syncs `?log=`.
+5. Mobile (390×844): the sidebar is hidden, and the drawer opens and navigates to Org settings.
+
+`auth.spec.ts` now expects `/overview` to forward to the org dashboard (system status lives there).
+
+### Known limitations
+
+- No live auto-refresh; the dashboards have a Refresh button.
+- The project switcher lists the first 100 projects of the org.
+- The metrics doc link points at the server repo on GitHub.
+- Incidents are a placeholder until Phase 5.
