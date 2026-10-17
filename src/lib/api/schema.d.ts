@@ -226,7 +226,8 @@ export interface paths {
     delete?: never
     options?: never
     head?: never
-    patch?: never
+    /** Rename an organization (owner/admin; the slug does not change) */
+    patch: operations["update_organization_api_v1_organizations__org_id__patch"]
     trace?: never
   }
   "/api/v1/organizations/{org_id}/audit-logs": {
@@ -280,6 +281,40 @@ export interface paths {
     head?: never
     /** Change a member's role */
     patch: operations["change_member_role_api_v1_organizations__org_id__members__user_id__patch"]
+    trace?: never
+  }
+  "/api/v1/organizations/{org_id}/metrics/summary": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Organization dashboard: totals and per-project metrics over active projects */
+    get: operations["org_summary_api_v1_organizations__org_id__metrics_summary_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/organizations/{org_id}/metrics/timeseries": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Zero-filled time buckets across the organization's active projects */
+    get: operations["org_timeseries_api_v1_organizations__org_id__metrics_timeseries_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
     trace?: never
   }
   "/api/v1/organizations/{org_id}/projects": {
@@ -387,6 +422,125 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/projects/{project_id}/logs": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Search and list log events (newest first, keyset pagination) */
+    get: operations["list_logs_api_v1_projects__project_id__logs_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/logs/facets": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Levels, services and environments present in the range (with counts) */
+    get: operations["log_facets_api_v1_projects__project_id__logs_facets_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/logs/{log_id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** One log event with its attributes */
+    get: operations["get_log_api_v1_projects__project_id__logs__log_id__get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/metrics/overview": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Totals, error rate and latency percentiles for a project */
+    get: operations["project_overview_api_v1_projects__project_id__metrics_overview_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/metrics/recent-errors": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Most recent error events (level error/critical or HTTP 5xx) */
+    get: operations["project_recent_errors_api_v1_projects__project_id__metrics_recent_errors_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/metrics/services": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Per-service requests, errors, error rate and p95 */
+    get: operations["project_services_api_v1_projects__project_id__metrics_services_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/metrics/timeseries": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Zero-filled time buckets of events, requests, errors and p95 */
+    get: operations["project_timeseries_api_v1_projects__project_id__metrics_timeseries_get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/projects/{project_id}/restore": {
     parameters: {
       query?: never
@@ -463,6 +617,13 @@ export interface components {
        * @enum {string}
        */
       status: "ok" | "error"
+    }
+    /** FacetValue */
+    FacetValue: {
+      /** Count */
+      count: number
+      /** Value */
+      value: string
     }
     /** FieldError */
     FieldError: {
@@ -589,6 +750,30 @@ export interface components {
        */
       secret: string
     }
+    /** Latency */
+    Latency: {
+      /**
+       * Min Samples
+       * @description Percentiles are null below this many samples
+       */
+      min_samples: number
+      /** P50 Ms */
+      p50_ms: number | null
+      /** P95 Ms */
+      p95_ms: number | null
+      /** P99 Ms */
+      p99_ms: number | null
+      /**
+       * Reason
+       * @description Why the percentiles are null, if they are
+       */
+      reason: ("no_requests" | "no_latency_samples" | "insufficient_samples") | null
+      /**
+       * Samples
+       * @description Requests with a duration_ms in range
+       */
+      samples: number
+    }
     /** LivenessResponse */
     LivenessResponse: {
       /**
@@ -597,6 +782,55 @@ export interface components {
        * @constant
        */
       status: "ok"
+    }
+    /** LogEventDetail */
+    LogEventDetail: {
+      /** Attributes */
+      attributes: {
+        [key: string]: unknown
+      }
+      /** Duration Ms */
+      duration_ms: number | null
+      /** Environment */
+      environment: string
+      /**
+       * Event Id
+       * Format: uuid
+       */
+      event_id: string
+      /** Http Method */
+      http_method: string | null
+      /** Http Path */
+      http_path: string | null
+      /** Http Status */
+      http_status: number | null
+      /** Id */
+      id: number
+      /** Is Synthetic */
+      is_synthetic: boolean
+      /**
+       * Level
+       * @enum {string}
+       */
+      level: "debug" | "info" | "warning" | "error" | "critical"
+      /** Message */
+      message: string
+      /**
+       * Received At
+       * Format: date-time
+       */
+      received_at: string
+      /** Request Id */
+      request_id: string | null
+      /** Service Name */
+      service_name: string
+      /**
+       * Timestamp
+       * Format: date-time
+       */
+      timestamp: string
+      /** Trace Id */
+      trace_id: string | null
     }
     /** LogEventIn */
     LogEventIn: {
@@ -665,6 +899,96 @@ export interface components {
        */
       trace_id: string | null
     }
+    /**
+     * LogEventSummary
+     * @description A log row as listed (attributes omitted; fetch the detail endpoint for them).
+     */
+    LogEventSummary: {
+      /** Duration Ms */
+      duration_ms: number | null
+      /** Environment */
+      environment: string
+      /**
+       * Event Id
+       * Format: uuid
+       */
+      event_id: string
+      /** Http Method */
+      http_method: string | null
+      /** Http Path */
+      http_path: string | null
+      /** Http Status */
+      http_status: number | null
+      /** Id */
+      id: number
+      /** Is Synthetic */
+      is_synthetic: boolean
+      /**
+       * Level
+       * @enum {string}
+       */
+      level: "debug" | "info" | "warning" | "error" | "critical"
+      /** Message */
+      message: string
+      /** Request Id */
+      request_id: string | null
+      /** Service Name */
+      service_name: string
+      /**
+       * Timestamp
+       * Format: date-time
+       */
+      timestamp: string
+      /** Trace Id */
+      trace_id: string | null
+    }
+    /** LogFacetsResponse */
+    LogFacetsResponse: {
+      /**
+       * Environments
+       * @description Top environments by event count (max 20)
+       */
+      environments: components["schemas"]["FacetValue"][]
+      /** Levels */
+      levels: components["schemas"]["FacetValue"][]
+      /**
+       * Range From
+       * Format: date-time
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       */
+      range_to: string
+      /**
+       * Services
+       * @description Top services by event count (max 100)
+       */
+      services: components["schemas"]["FacetValue"][]
+    }
+    /** LogListResponse */
+    LogListResponse: {
+      /** Items */
+      items: components["schemas"]["LogEventSummary"][]
+      /**
+       * Next Cursor
+       * @description Opaque cursor for the next (older) page; null on the last page
+       */
+      next_cursor: string | null
+      /**
+       * Range From
+       * Format: date-time
+       * @description Resolved inclusive start (UTC)
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       * @description Resolved exclusive end (UTC)
+       */
+      range_to: string
+    }
     /** LoginRequest */
     LoginRequest: {
       /** Email */
@@ -721,6 +1045,83 @@ export interface components {
       /** Detail */
       detail: string
     }
+    /** OrgRecentError */
+    OrgRecentError: {
+      /** Duration Ms */
+      duration_ms: number | null
+      /** Environment */
+      environment: string
+      /**
+       * Event Id
+       * Format: uuid
+       */
+      event_id: string
+      /** Http Method */
+      http_method: string | null
+      /** Http Path */
+      http_path: string | null
+      /** Http Status */
+      http_status: number | null
+      /** Id */
+      id: number
+      /** Is Synthetic */
+      is_synthetic: boolean
+      /**
+       * Level
+       * @enum {string}
+       */
+      level: "debug" | "info" | "warning" | "error" | "critical"
+      /** Message */
+      message: string
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string
+      /** Project Name */
+      project_name: string
+      /** Request Id */
+      request_id: string | null
+      /** Service Name */
+      service_name: string
+      /**
+       * Timestamp
+       * Format: date-time
+       */
+      timestamp: string
+      /** Trace Id */
+      trace_id: string | null
+    }
+    /** OrgSummaryResponse */
+    OrgSummaryResponse: {
+      /** Min Samples */
+      min_samples: number
+      /**
+       * Org Id
+       * Format: uuid
+       */
+      org_id: string
+      /**
+       * Project Count
+       * @description Active (non-archived) projects included
+       */
+      project_count: number
+      /** Projects */
+      projects: components["schemas"]["ProjectSummary"][]
+      /**
+       * Range From
+       * Format: date-time
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       */
+      range_to: string
+      /** Recent Errors */
+      recent_errors: components["schemas"]["OrgRecentError"][]
+      totals: components["schemas"]["Totals"]
+    }
     /** OrganizationCreate */
     OrganizationCreate: {
       /** Name */
@@ -749,6 +1150,14 @@ export interface components {
       role: components["schemas"]["Role"]
       /** Slug */
       slug: string
+    }
+    /**
+     * OrganizationUpdate
+     * @description Rename only; the slug is a stable identifier and does not change.
+     */
+    OrganizationUpdate: {
+      /** Name */
+      name: string
     }
     /**
      * Problem
@@ -840,6 +1249,53 @@ export interface components {
        */
       updated_at: string
     }
+    /** ProjectOverviewResponse */
+    ProjectOverviewResponse: {
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string
+      /**
+       * Range From
+       * Format: date-time
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       */
+      range_to: string
+      totals: components["schemas"]["Totals"]
+    }
+    /** ProjectSummary */
+    ProjectSummary: {
+      /** Environment */
+      environment: string
+      /** Error Rate */
+      error_rate: number | null
+      /** Errors */
+      errors: number
+      /** Events */
+      events: number
+      /** Name */
+      name: string
+      /** P95 Ms */
+      p95_ms: number | null
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string
+      /** Request Errors */
+      request_errors: number
+      /** Requests */
+      requests: number
+      /** Samples */
+      samples: number
+      /** Slug */
+      slug: string
+    }
     /**
      * ProjectUpdate
      * @description Partial update. `org_id`, `archived_at` etc. are not accepted (extra=forbid).
@@ -868,6 +1324,21 @@ export interface components {
        */
       status: "ok" | "unavailable"
     }
+    /** RecentErrorsResponse */
+    RecentErrorsResponse: {
+      /** Items */
+      items: components["schemas"]["LogEventSummary"][]
+      /**
+       * Range From
+       * Format: date-time
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       */
+      range_to: string
+    }
     /** RegisterRequest */
     RegisterRequest: {
       /** Display Name */
@@ -882,6 +1353,45 @@ export interface components {
      * @enum {string}
      */
     Role: "owner" | "admin" | "member" | "viewer"
+    /** ServiceSummary */
+    ServiceSummary: {
+      /** Error Rate */
+      error_rate: number | null
+      /** Errors */
+      errors: number
+      /** Events */
+      events: number
+      /** P95 Ms */
+      p95_ms: number | null
+      /** Request Errors */
+      request_errors: number
+      /** Requests */
+      requests: number
+      /** Samples */
+      samples: number
+      /** Service Name */
+      service_name: string
+    }
+    /** ServicesResponse */
+    ServicesResponse: {
+      /**
+       * Items
+       * @description Top services by event count (max 50)
+       */
+      items: components["schemas"]["ServiceSummary"][]
+      /** Min Samples */
+      min_samples: number
+      /**
+       * Range From
+       * Format: date-time
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       */
+      range_to: string
+    }
     /** SessionInfo */
     SessionInfo: {
       /**
@@ -925,6 +1435,79 @@ export interface components {
       last_seen_at: string
       /** User Agent */
       user_agent: string | null
+    }
+    /** TimeseriesPoint */
+    TimeseriesPoint: {
+      /**
+       * Bucket Start
+       * Format: date-time
+       */
+      bucket_start: string
+      /** Errors */
+      errors: number
+      /** Events */
+      events: number
+      /**
+       * P95 Ms
+       * @description Null when the bucket has fewer than min_samples
+       */
+      p95_ms: number | null
+      /** Request Errors */
+      request_errors: number
+      /** Requests */
+      requests: number
+      /** Samples */
+      samples: number
+    }
+    /** TimeseriesResponse */
+    TimeseriesResponse: {
+      /** Bucket Seconds */
+      bucket_seconds: number
+      /** Min Samples */
+      min_samples: number
+      /** Points */
+      points: components["schemas"]["TimeseriesPoint"][]
+      /**
+       * Range From
+       * Format: date-time
+       */
+      range_from: string
+      /**
+       * Range To
+       * Format: date-time
+       */
+      range_to: string
+    }
+    /** Totals */
+    Totals: {
+      /**
+       * Error Rate
+       * @description request_errors / requests; null if no requests
+       */
+      error_rate: number | null
+      /** Error Rate Reason */
+      error_rate_reason: ("no_requests" | "no_latency_samples" | "insufficient_samples") | null
+      /**
+       * Errors
+       * @description Events with level error/critical OR http_status >= 500
+       */
+      errors: number
+      /**
+       * Events
+       * @description All accepted log events in range
+       */
+      events: number
+      latency: components["schemas"]["Latency"]
+      /**
+       * Request Errors
+       * @description Requests that are errors (numerator of error_rate)
+       */
+      request_errors: number
+      /**
+       * Requests
+       * @description Events with an http_status
+       */
+      requests: number
     }
     /** UserOut */
     UserOut: {
@@ -1577,6 +2160,72 @@ export interface operations {
       }
     }
   }
+  update_organization_api_v1_organizations__org_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["OrganizationUpdate"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["OrganizationOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
   list_audit_logs_api_v1_organizations__org_id__audit_logs_get: {
     parameters: {
       query?: {
@@ -1894,6 +2543,121 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  org_summary_api_v1_organizations__org_id__metrics_summary_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+        recent_limit?: number
+      }
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["OrgSummaryResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  org_timeseries_api_v1_organizations__org_id__metrics_timeseries_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+      }
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["TimeseriesResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
         headers: {
           [name: string]: unknown
         }
@@ -2488,6 +3252,411 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  list_logs_api_v1_projects__project_id__logs_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+        level?: ("debug" | "info" | "warning" | "error" | "critical")[] | null
+        service_name?: string[] | null
+        environment?: string | null
+        trace_id?: string | null
+        request_id?: string | null
+        /** @description Full-text search on message (prefix match per word) */
+        q?: string | null
+        cursor?: string | null
+        limit?: number
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["LogListResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  log_facets_api_v1_projects__project_id__logs_facets_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["LogFacetsResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  get_log_api_v1_projects__project_id__logs__log_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        log_id: number
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["LogEventDetail"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  project_overview_api_v1_projects__project_id__metrics_overview_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectOverviewResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  project_recent_errors_api_v1_projects__project_id__metrics_recent_errors_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+        limit?: number
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["RecentErrorsResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  project_services_api_v1_projects__project_id__metrics_services_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ServicesResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  project_timeseries_api_v1_projects__project_id__metrics_timeseries_get: {
+    parameters: {
+      query?: {
+        /** @description Inclusive start (ISO 8601 with offset). Default: to - 24h */
+        from?: string | null
+        /** @description Exclusive end. Default: now */
+        to?: string | null
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["TimeseriesResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
         headers: {
           [name: string]: unknown
         }
