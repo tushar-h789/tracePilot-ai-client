@@ -1,9 +1,19 @@
-import type { Metadata } from "next"
+"use client"
 
-import { ProjectSettingsPageClient } from "./project-settings-page-client"
+import { useParams } from "next/navigation"
+import { Suspense } from "react"
 
-export const metadata: Metadata = { title: "Project settings" }
+import { ProjectOverview } from "@/components/dashboard/project-overview"
 
-export default function ProjectSettingsPage() {
-  return <ProjectSettingsPageClient />
+function Inner() {
+  const params = useParams<{ orgId: string; projectId: string }>()
+  return <ProjectOverview orgId={params.orgId} projectId={params.projectId} />
+}
+
+export default function ProjectOverviewPage() {
+  return (
+    <Suspense>
+      <Inner />
+    </Suspense>
+  )
 }

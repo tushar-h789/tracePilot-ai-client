@@ -71,7 +71,16 @@ export function OrganizationsView() {
                 <Card size="sm">
                   <CardHeader className="flex flex-row items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <CardTitle className="truncate">{org.name}</CardTitle>
+                      <CardTitle className="truncate">
+                        <Link
+                          href={`/orgs/${org.id}`}
+                          onClick={() => rememberOrg(org.id)}
+                          className="underline-offset-4 hover:underline"
+                          aria-label={`Dashboard of ${org.name}`}
+                        >
+                          {org.name}
+                        </Link>
+                      </CardTitle>
                       <CardDescription className="truncate">{org.slug}</CardDescription>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

@@ -33,6 +33,10 @@ interface Loaded {
 }
 
 export function projectHref(orgId: string, projectId: string) {
+  return `/orgs/${orgId}/projects/${projectId}/settings`
+}
+
+export function projectOverviewHref(orgId: string, projectId: string) {
   return `/orgs/${orgId}/projects/${projectId}`
 }
 
@@ -185,7 +189,15 @@ export function ProjectsView({ orgId }: { orgId: string }) {
                     <Card size="sm">
                       <CardHeader className="flex flex-row items-center justify-between gap-3">
                         <div className="min-w-0">
-                          <CardTitle className="truncate">{project.name}</CardTitle>
+                          <CardTitle className="truncate">
+                            <Link
+                              href={projectOverviewHref(orgId, project.id)}
+                              className="underline-offset-4 hover:underline"
+                              aria-label={`Open ${project.name}`}
+                            >
+                              {project.name}
+                            </Link>
+                          </CardTitle>
                           <CardDescription className="truncate">{project.slug}</CardDescription>
                         </div>
                         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
