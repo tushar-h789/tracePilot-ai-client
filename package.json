@@ -1,0 +1,70 @@
+{
+  "name": "tracepilot-ai-client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "postbuild": "rm -rf .next/standalone/public .next/standalone/.next/static && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static",
+    "start": "PORT=${PORT:-3100} node .next/standalone/server.js",
+    "lint": "eslint --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "gen:api": "openapi-typescript ../tracePilot-ai-server/openapi/openapi.json -o src/lib/api/schema.d.ts && prettier --write src/lib/api/schema.d.ts",
+    "check:api": "bun scripts/check-api-types.ts",
+    "ci": "./scripts/ci-local.sh",
+    "audit": "bun audit --audit-level=high --ignore=GHSA-vfj7-8cjw-p6xm"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.9.0",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.5.0",
+    "lucide-react": "^1.58.0",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@tailwindcss/turbopack": "^4",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "eslint-config-prettier": "^10.1.8",
+    "jsdom": "^30.1.3",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.10",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "shadcn": "^4.22.0",
+    "tailwindcss": "^4",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.5"
+  },
+  "packageManager": "bun@1.3.14",
+  "ignoreScripts": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "trustedDependencies": [
+    "sharp",
+    "unrs-resolver"
+  ],
+  "engines": {
+    "node": ">=24",
+    "bun": ">=1.3.14"
+  }
+}

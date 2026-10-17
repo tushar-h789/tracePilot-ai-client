@@ -1,25 +1,101 @@
 # TracePilot AI — Client
 
 Next.js web application for **TracePilot AI**, an AI-assisted application observability and incident
-investigation platform (portfolio MVP): logs explorer, request/error/latency dashboards, rule-based incidents
-and background AI investigations with validated evidence.
+investigation platform (portfolio MVP).
 
-> Status: **Phase 0 — discovery (docs only).** No application code yet.
+> Status: **Phase 1 — foundation**: app shell, placeholder pages with honest empty states, a live system status
+> widget backed by the API's readiness endpoint, typed API client generated from the server's OpenAPI schema,
+> tests and CI. No authentication yet.
 
-- API, worker, Docker Compose stack and the **canonical project documentation** live in the server repo:
-  [tracePilot-ai-server → docs/](https://github.com/tushar-h789/tracePilot-ai-server/tree/main/docs)
-  (during Phase 0 the docs are on branch
-  [`phase-0/discovery`](https://github.com/tushar-h789/tracePilot-ai-server/tree/phase-0/discovery/docs)).
-- Client-specific notes: [docs/PROGRESS.md](docs/PROGRESS.md).
+Canonical docs (requirements, architecture, security, ADRs) live in the server repo:
+[tracePilot-ai-server/docs](https://github.com/tushar-h789/tracePilot-ai-server/tree/phase-1/foundation/docs).
+Client notes: [docs/PROGRESS.md](docs/PROGRESS.md).
 
-## Planned stack
-Next.js (App Router) · TypeScript (strict) · Tailwind CSS v4 · shadcn/ui · React Hook Form + Zod · Recharts ·
-Vitest + React Testing Library · Playwright · npm. API types generated from the server's OpenAPI schema.
+## Stack
 
-## Local layout
+Next.js 16.4 (App Router, Turbopack, Cache Components) · React 19.3 · TypeScript 5.9 (strict +
+`noUncheckedIndexedAccess`) · Tailwind CSS v4 · shadcn/ui (`base-nova`, Base UI primitives, CSS-variable tokens,
+light theme) · Vitest 5 + React Testing Library · Playwright 1.64 · openapi-typescript 7 · **Bun 1.3** as package
+manager/script runner, **Node 24** as the Next.js runtime (see server ADR-004 for what was verified on Bun).
+
+## Prerequisites
+
+Bun ≥ 1.3.14 and Node ≥ 24. Sibling checkout of the server for API type generation:
+
 ```
 tracePilot-ai/
-  tracePilot-ai-server/   # docker-compose.yml can build this app from ../tracePilot-ai-client
+  tracePilot-ai-server/   # API + docker-compose.yml (can build this app with --profile web)
   tracePilot-ai-client/   # this repo
 ```
-Setup instructions arrive in Phase 1.
+
+## Getting started
+
+```bash
+bun install --frozen-lockfile
+cp .env.example .env.local          # API_BASE_URL=http://localhost:8000/api/v1 (server-side only)
+# start the API: in ../tracePilot-ai-server → docker compose up -d
+bun run dev                         # http://localhost:3100
+```
+
+The overview page shows **System status** from `GET /api/v1/health/ready` (ok / degraded / unreachable).
+
+## Scripts
+
+| Script                                     | What it does                                                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `bun run dev`                              | dev server on port 3100 (3000/3001 are taken on the dev machine)                               |
+| `bun run build`                            | `next build` (standalone output) + copies `public/` and `.next/static` into `.next/standalone` |
+| `bun run start`                            | runs the standalone server with Node (`PORT` defaults to 3100)                                 |
+| `bun run lint` / `format` / `format:check` | ESLint (Next.js + TS rules, `react/no-danger`) / Prettier                                      |
+| `bun run typecheck`                        | `next typegen && tsc --noEmit`                                                                 |
+| `bun run test` / `test:coverage`           | Vitest + RTL (jsdom)                                                                           |
+| `bun run test:e2e`                         | Playwright smoke (needs `bun run build` and `bun x playwright install chromium`)               |
+| `bun run gen:api`                          | regenerate `src/lib/api/schema.d.ts` from `../tracePilot-ai-server/openapi/openapi.json`       |
+| `bun run check:api`                        | fail if the generated types drift from the server schema (`OPENAPI_SPEC` overrides the path)   |
+| `bun run audit`                            | `bun audit --audit-level=high` with documented ignores                                         |
+| `./scripts/ci-local.sh`                    | everything CI runs, locally (`SKIP_E2E=1` to skip Playwright)                                  |
+
+## Structure
+
+```
+src/
+  app/
+    (auth)/login/            # placeholder sign-in page (no submission)
+    (app)/layout.tsx         # shared shell: responsive sidebar, top bar, breadcrumbs placeholder
+    (app)/{overview,logs,incidents,settings}/page.tsx
+    loading.tsx, error.tsx, not-found.tsx, healthz/route.ts
+  components/
+    ui/                      # shadcn primitives (button, card, badge, skeleton, sheet, breadcrumb, …)
+    layout/                  # app shell, sidebar nav, mobile nav, breadcrumbs, page header
+    system-status/           # server component + presentational view
+    empty-state.tsx, route-error.tsx
+  lib/api/
+    config.ts                # single source of the API base URL
+    client.ts, errors.ts     # typed fetch wrapper (timeout, JSON, ApiError)
+    schema.d.ts              # GENERATED by openapi-typescript — do not edit
+    types.ts, health.ts
+tests/unit/                  # Vitest
+e2e/                         # Playwright
+```
+
+## Configuration
+
+| Variable       | Scope                             | Purpose                                                                                 |
+| -------------- | --------------------------------- | --------------------------------------------------------------------------------------- |
+| `API_BASE_URL` | server only, read at request time | API base, default `http://localhost:8000/api/v1`; compose sets `http://api:8000/api/v1` |
+
+There is deliberately **no `NEXT_PUBLIC_API_BASE_URL`**: the browser never calls the API directly. From Phase 2 the
+browser calls the Next.js origin, which proxies `/api/v1/*` to the API (same-origin cookies, ADR-005). Anything
+prefixed `NEXT_PUBLIC_` is embedded in the browser bundle and must never hold secrets.
+
+## Docker
+
+`Dockerfile` (multi-stage): `oven/bun:1.3.14-slim` installs + builds, `node:24-slim` runs `server.js` as uid 1000
+with a `/healthz` healthcheck. Normally built from the server repo:
+`docker compose --profile web up -d --build web` → http://127.0.0.1:3100.
+
+## Dependency audit
+
+`bun run audit` ignores **GHSA-vfj7-8cjw-p6xm** (`braces` ≤ 3.0.3, DoS via nested patterns): it only reaches
+build-time tooling (`shadcn` CLI, `@next/eslint-plugin-next` via fast-glob/micromatch), never the runtime bundle,
+and no patched version exists (checked 2026-10-17). Remove the ignore when a fix is published.
