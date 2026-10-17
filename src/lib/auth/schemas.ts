@@ -50,3 +50,34 @@ export const addMemberSchema = z.object({
   role: z.enum(ROLES),
 })
 export type AddMemberValues = z.infer<typeof addMemberSchema>
+
+/** Mirrors app/models/project.py (SLUG_PATTERN, ENVIRONMENT_PATTERN) and ProjectCreate. */
+export const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,46}[a-z0-9]$/
+export const ENVIRONMENT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/
+
+export const projectSchema = z.object({
+  name: z.string().trim().min(1, "Enter a project name.").max(100, "Use at most 100 characters."),
+  slug: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || SLUG_PATTERN.test(v), {
+      message: "3–48 lowercase letters, digits or hyphens; no leading or trailing hyphen.",
+    }),
+  environment: z
+    .string()
+    .trim()
+    .regex(ENVIRONMENT_PATTERN, "Up to 32 lowercase letters, digits, - or _."),
+  // Kept as a string in the form (HTML inputs are strings); converted with Number() on submit.
+  retentionDays: z
+    .string()
+    .trim()
+    .refine((v) => /^\d{1,2}$/.test(v) && Number(v) >= 1 && Number(v) <= 30, {
+      message: "Between 1 and 30 days.",
+    }),
+})
+export type ProjectValues = z.infer<typeof projectSchema>
+
+export const keyNameSchema = z.object({
+  name: z.string().trim().min(1, "Give the key a name.").max(100, "Use at most 100 characters."),
+})
+export type KeyNameValues = z.infer<typeof keyNameSchema>

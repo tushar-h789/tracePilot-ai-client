@@ -177,6 +177,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  "/api/v1/ingest/logs": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Ingest a batch of log events (ingestion key auth; idempotent per event_id) */
+    post: operations["ingest_logs_api_v1_ingest_logs_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   "/api/v1/organizations": {
     parameters: {
       query?: never
@@ -265,6 +282,128 @@ export interface paths {
     patch: operations["change_member_role_api_v1_organizations__org_id__members__user_id__patch"]
     trace?: never
   }
+  "/api/v1/organizations/{org_id}/projects": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List projects in an organization (newest first, keyset pagination) */
+    get: operations["list_projects_api_v1_organizations__org_id__projects_get"]
+    put?: never
+    /** Create a project (owner/admin) */
+    post: operations["create_project_api_v1_organizations__org_id__projects_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** Get a project (any member of its organization) */
+    get: operations["get_project_api_v1_projects__project_id__get"]
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    /** Update a project (owner/admin; archived projects are read-only) */
+    patch: operations["update_project_api_v1_projects__project_id__patch"]
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/archive": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Archive a project (owner/admin): hidden from default lists, ingestion rejected */
+    post: operations["archive_project_api_v1_projects__project_id__archive_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/ingestion-keys": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** List ingestion keys (metadata only; member+) */
+    get: operations["list_keys_api_v1_projects__project_id__ingestion_keys_get"]
+    put?: never
+    /** Create an ingestion key (owner/admin). The secret is returned only here. */
+    post: operations["create_key_api_v1_projects__project_id__ingestion_keys_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/ingestion-keys/{key_id}/revoke": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Revoke an ingestion key immediately (owner/admin; idempotent) */
+    post: operations["revoke_key_api_v1_projects__project_id__ingestion_keys__key_id__revoke_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/ingestion-keys/{key_id}/rotate": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Rotate: issue a replacement key; the old one is revoked now or after a grace period */
+    post: operations["rotate_key_api_v1_projects__project_id__ingestion_keys__key_id__rotate_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  "/api/v1/projects/{project_id}/restore": {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** Restore an archived project (owner/admin) */
+    post: operations["restore_project_api_v1_projects__project_id__restore_post"]
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
 }
 export type webhooks = Record<string, never>
 export interface components {
@@ -339,6 +478,117 @@ export interface components {
       /** Detail */
       detail?: components["schemas"]["ValidationError"][]
     }
+    /** IngestBatch */
+    IngestBatch: {
+      /** Events */
+      events: components["schemas"]["LogEventIn"][]
+    }
+    /** IngestResult */
+    IngestResult: {
+      /**
+       * Accepted
+       * @description Newly stored events
+       */
+      accepted: number
+      /**
+       * Duplicates
+       * @description Events whose event_id was already stored for the project
+       */
+      duplicates: number
+      /**
+       * Received
+       * @description Events in the request
+       */
+      received: number
+      /**
+       * Rejected
+       * @description Always 0 on success: any invalid event rejects the whole batch with 422
+       */
+      rejected: number
+    }
+    /** IngestionKeyCreate */
+    IngestionKeyCreate: {
+      /** Name */
+      name: string
+    }
+    /** IngestionKeyCreated */
+    IngestionKeyCreated: {
+      key: components["schemas"]["IngestionKeyOut"]
+      /**
+       * Secret
+       * @description The full ingestion key. Shown exactly once; only a hash is stored.
+       */
+      secret: string
+    }
+    /** IngestionKeyListResponse */
+    IngestionKeyListResponse: {
+      /** Items */
+      items: components["schemas"]["IngestionKeyOut"][]
+      /** Next Cursor */
+      next_cursor: string | null
+    }
+    /**
+     * IngestionKeyOut
+     * @description Key metadata. The secret is never part of this model.
+     */
+    IngestionKeyOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string
+      /** Created By */
+      created_by: string | null
+      /** Expires At */
+      expires_at: string | null
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Last Used At */
+      last_used_at: string | null
+      /** Name */
+      name: string
+      /**
+       * Prefix
+       * @description Public, non-secret identifier (tp_<12 hex>)
+       */
+      prefix: string
+      /**
+       * Project Id
+       * Format: uuid
+       */
+      project_id: string
+      /** Replaced By Id */
+      replaced_by_id: string | null
+      /** Revoked At */
+      revoked_at: string | null
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: "active" | "expired" | "revoked"
+    }
+    /** IngestionKeyRotate */
+    IngestionKeyRotate: {
+      /**
+       * Grace Seconds
+       * @description How long the old key keeps working (0 = revoked immediately). Capped by KEY_ROTATION_MAX_GRACE_SECONDS (default 86400).
+       * @default 0
+       */
+      grace_seconds: number
+    }
+    /** IngestionKeyRotated */
+    IngestionKeyRotated: {
+      key: components["schemas"]["IngestionKeyOut"]
+      previous_key: components["schemas"]["IngestionKeyOut"]
+      /**
+       * Secret
+       * @description The full ingestion key. Shown exactly once; only a hash is stored.
+       */
+      secret: string
+    }
     /** LivenessResponse */
     LivenessResponse: {
       /**
@@ -347,6 +597,73 @@ export interface components {
        * @constant
        */
       status: "ok"
+    }
+    /** LogEventIn */
+    LogEventIn: {
+      /**
+       * Attributes
+       * @description JSON object: depth ≤ 5, ≤ 128 keys, ≤ 16384 bytes serialized. Sensitive-looking keys are redacted.
+       */
+      attributes?: {
+        [key: string]: unknown
+      }
+      /**
+       * Duration Ms
+       * @default null
+       */
+      duration_ms: number | null
+      /**
+       * Environment
+       * @description Defaults to the project's environment
+       * @default null
+       */
+      environment: string | null
+      /**
+       * Event Id
+       * Format: uuid
+       * @description Client-generated UUID; the idempotency key per project
+       */
+      event_id: string
+      /**
+       * Http Method
+       * @default null
+       */
+      http_method: ("GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS") | null
+      /**
+       * Http Path
+       * @default null
+       */
+      http_path: string | null
+      /**
+       * Http Status
+       * @default null
+       */
+      http_status: number | null
+      /**
+       * Level
+       * @enum {string}
+       */
+      level: "debug" | "info" | "warning" | "error" | "critical"
+      /** Message */
+      message: string
+      /**
+       * Request Id
+       * @default null
+       */
+      request_id: string | null
+      /** Service Name */
+      service_name: string
+      /**
+       * Timestamp
+       * Format: date-time
+       * @description When the event happened; must include a timezone (stored as UTC)
+       */
+      timestamp: string
+      /**
+       * Trace Id
+       * @default null
+       */
+      trace_id: string | null
     }
     /** LoginRequest */
     LoginRequest: {
@@ -457,6 +774,85 @@ export interface components {
       type: string
     } & {
       [key: string]: unknown
+    }
+    /** ProjectCreate */
+    ProjectCreate: {
+      /**
+       * Environment
+       * @default production
+       */
+      environment: string
+      /** Name */
+      name: string
+      /**
+       * Retention Days
+       * @default 7
+       */
+      retention_days: number
+      /**
+       * Slug
+       * @description Unique within the organization; derived from the name when omitted.
+       */
+      slug?: string | null
+    }
+    /** ProjectListResponse */
+    ProjectListResponse: {
+      /** Items */
+      items: components["schemas"]["ProjectOut"][]
+      /**
+       * Next Cursor
+       * @description Opaque cursor for the next page; null when this is the last page
+       */
+      next_cursor: string | null
+    }
+    /** ProjectOut */
+    ProjectOut: {
+      /** Archived At */
+      archived_at: string | null
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string
+      /** Environment */
+      environment: string
+      /**
+       * Id
+       * Format: uuid
+       */
+      id: string
+      /** Name */
+      name: string
+      /**
+       * Org Id
+       * Format: uuid
+       */
+      org_id: string
+      /** Retention Days */
+      retention_days: number
+      /** @description The caller's role (inherited from the organization) */
+      role: components["schemas"]["Role"]
+      /** Slug */
+      slug: string
+      /**
+       * Updated At
+       * Format: date-time
+       */
+      updated_at: string
+    }
+    /**
+     * ProjectUpdate
+     * @description Partial update. `org_id`, `archived_at` etc. are not accepted (extra=forbid).
+     */
+    ProjectUpdate: {
+      /** Environment */
+      environment?: string | null
+      /** Name */
+      name?: string | null
+      /** Retention Days */
+      retention_days?: number | null
+      /** Slug */
+      slug?: string | null
     }
     /** ReadinessChecks */
     ReadinessChecks: {
@@ -611,7 +1007,7 @@ export interface operations {
           "application/json": components["schemas"]["MeResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -708,7 +1104,7 @@ export interface operations {
           "application/json": components["schemas"]["LogoutAllResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -748,7 +1144,7 @@ export interface operations {
           "application/json": components["schemas"]["MeResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -842,7 +1238,7 @@ export interface operations {
           "application/json": components["schemas"]["SessionListResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -872,7 +1268,7 @@ export interface operations {
         }
         content?: never
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -962,6 +1358,90 @@ export interface operations {
       }
     }
   }
+  ingest_logs_api_v1_ingest_logs_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["IngestBatch"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["IngestResult"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Request body too large */
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Unsupported media type or content encoding */
+      415: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Rate limited (see Retry-After) */
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Dependency unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
   list_organizations_api_v1_organizations_get: {
     parameters: {
       query?: never
@@ -980,7 +1460,7 @@ export interface operations {
           "application/json": components["schemas"]["OrganizationListResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1014,7 +1494,7 @@ export interface operations {
           "application/json": components["schemas"]["OrganizationOut"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1066,7 +1546,7 @@ export interface operations {
           "application/json": components["schemas"]["OrganizationOut"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1119,7 +1599,7 @@ export interface operations {
           "application/json": components["schemas"]["AuditLogListResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1180,7 +1660,7 @@ export interface operations {
           "application/json": components["schemas"]["MemberListResponse"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1235,7 +1715,7 @@ export interface operations {
           "application/json": components["schemas"]["MemberOut"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1306,7 +1786,7 @@ export interface operations {
         }
         content?: never
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1382,7 +1862,7 @@ export interface operations {
           "application/json": components["schemas"]["MemberOut"]
         }
       }
-      /** @description Not authenticated */
+      /** @description Not authenticated (or invalid ingestion key) */
       401: {
         headers: {
           [name: string]: unknown
@@ -1414,6 +1894,662 @@ export interface operations {
       }
       /** @description Conflict */
       409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  list_projects_api_v1_organizations__org_id__projects_get: {
+    parameters: {
+      query?: {
+        include_archived?: boolean
+        cursor?: string | null
+        limit?: number
+      }
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectListResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  create_project_api_v1_organizations__org_id__projects_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        org_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ProjectCreate"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  get_project_api_v1_projects__project_id__get: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  update_project_api_v1_projects__project_id__patch: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ProjectUpdate"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  archive_project_api_v1_projects__project_id__archive_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  list_keys_api_v1_projects__project_id__ingestion_keys_get: {
+    parameters: {
+      query?: {
+        include_revoked?: boolean
+        cursor?: string | null
+        limit?: number
+      }
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["IngestionKeyListResponse"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  create_key_api_v1_projects__project_id__ingestion_keys_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["IngestionKeyCreate"]
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["IngestionKeyCreated"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  revoke_key_api_v1_projects__project_id__ingestion_keys__key_id__revoke_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        key_id: string
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["IngestionKeyOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  rotate_key_api_v1_projects__project_id__ingestion_keys__key_id__rotate_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        key_id: string
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["IngestionKeyRotate"] | null
+      }
+    }
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["IngestionKeyRotated"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Validation failed */
+      422: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+    }
+  }
+  restore_project_api_v1_projects__project_id__restore_post: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        project_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["ProjectOut"]
+        }
+      }
+      /** @description Not authenticated (or invalid ingestion key) */
+      401: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Forbidden (CSRF failure or insufficient role) */
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          "application/json": components["schemas"]["Problem"]
+          "application/problem+json": unknown
+        }
+      }
+      /** @description Not found (or not visible to the caller) */
+      404: {
         headers: {
           [name: string]: unknown
         }

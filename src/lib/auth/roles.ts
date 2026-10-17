@@ -26,3 +26,18 @@ export function canEditMember(actor: Role, target: Role): boolean {
   if (actor === "admin") return target !== "owner"
   return false
 }
+
+/** Create, edit, archive and restore projects (server: PROJECT_MANAGE). */
+export function canManageProjects(actor: Role): boolean {
+  return actor === "owner" || actor === "admin"
+}
+
+/** Create, rotate and revoke ingestion keys (server: KEYS_MANAGE). */
+export function canManageKeys(actor: Role): boolean {
+  return actor === "owner" || actor === "admin"
+}
+
+/** See ingestion key metadata (server: KEYS_READ_METADATA; viewers get 403). */
+export function canReadKeys(actor: Role): boolean {
+  return actor !== "viewer"
+}
