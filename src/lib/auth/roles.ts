@@ -41,3 +41,8 @@ export function canManageKeys(actor: Role): boolean {
 export function canReadKeys(actor: Role): boolean {
   return actor !== "viewer"
 }
+
+/** Rename the organization (server: ORG_UPDATE). */
+export function canManageOrg(actor: Role): boolean {
+  return actor === "owner" || actor === "admin"
+}

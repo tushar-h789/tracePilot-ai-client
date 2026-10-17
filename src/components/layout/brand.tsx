@@ -2,14 +2,18 @@ import Link from "next/link"
 
 import { BRAND } from "./nav-items"
 
-export function Brand() {
+export function Brand({ compact = false }: { compact?: boolean }) {
   const Icon = BRAND.icon
   return (
-    <Link href="/overview" className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+    <Link
+      href="/overview"
+      aria-label={compact ? BRAND.name : undefined}
+      className="flex items-center gap-2 text-sm font-semibold tracking-tight"
+    >
       <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <Icon aria-hidden="true" className="size-4" />
       </span>
-      {BRAND.name}
+      {compact ? null : BRAND.name}
     </Link>
   )
 }

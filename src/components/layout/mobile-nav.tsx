@@ -20,7 +20,7 @@ export function MobileNav() {
       >
         <MenuIcon aria-hidden="true" />
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-4">
+      <SheetContent side="left" className="w-72 overflow-y-auto p-4">
         <SheetHeader className="p-0">
           <SheetTitle>{BRAND.name}</SheetTitle>
         </SheetHeader>
