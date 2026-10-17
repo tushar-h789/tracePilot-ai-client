@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   cacheComponents: true,
+  // `bun run typecheck` (next typegen + tsc) runs as its own CI step. NEXT_SKIP_TYPECHECK=1 skips
+  // the duplicate in-build check to cap peak RAM on small machines; the default still checks.
+  typescript: { ignoreBuildErrors: process.env.NEXT_SKIP_TYPECHECK === "1" },
+  // Build worker count (default: CPU count - 1 = 15 here). NEXT_BUILD_CPUS=1 keeps peak RAM low.
+  experimental: process.env.NEXT_BUILD_CPUS
+    ? { cpus: Math.max(1, Number(process.env.NEXT_BUILD_CPUS)) }
+    : {},
   partialPrefetching: true,
   turbopack: {
     // Pin the workspace root: a stray lockfile in a parent directory must not change it.
