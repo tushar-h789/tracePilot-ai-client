@@ -11,6 +11,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 FROM oven/bun:1.3.14-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# One build worker keeps peak RAM around 0.6 GB (see next.config.ts); types are checked in CI.
+ENV NEXT_BUILD_CPUS=1 \
+    NEXT_SKIP_TYPECHECK=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # In this image `node` is a shim to Bun, so `next build` runs on the Bun runtime here.

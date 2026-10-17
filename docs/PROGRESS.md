@@ -85,3 +85,46 @@ OpenAPI type generation, CI workflow with least-privilege permissions.
 ### Next (Phase 2)
 
 Login/register forms (RHF + Zod), `/api/v1` proxy to the API, CSRF header handling, org/project switcher.
+
+## Phase 2 — Identity and access (2026-10-17, Asia/Dhaka UTC+6)
+
+Branch `phase-2/identity-access`, stacked on `phase-1/foundation` (PR base `phase-1/foundation`, retargeted to
+`main` after the Phase 1 PR merges). Server-side design: server repo ADR-018/019/020, SECURITY §10.
+
+### Delivered
+
+- `/login` and `/register` with React Hook Form + Zod (same 12–128 policy as the API, server field errors mapped
+  onto inputs, generic login error, rate-limit message, safe `next` redirects).
+- Browser API client (`src/lib/api/browser.ts`): `credentials: "include"`, automatic `X-CSRF-Token`, one retry on
+  `csrf_failed`; no tokens in web storage.
+- Same-origin proxy route `src/app/api/v1/[...path]/route.ts`; `src/proxy.ts` optimistic redirect; server-side
+  `getCurrentUser()` in the `(app)` layout (redirects to `/login` when the session is invalid).
+- Sign out button in the shell; current user shown.
+- `/orgs`: list + create organization (remembers last org id in localStorage — non-secret);
+  `/orgs/[orgId]/members`: list, add by email, change role, remove — controls shown by role (owner/admin/member/
+  viewer), server refusals displayed; not-found state for orgs the user cannot see; loading/empty/error states.
+- Regenerated `schema.d.ts`; Vitest 59 tests; Playwright E2E against the real API; CI `e2e` job now starts the
+  server stack (matching branch) instead of a smoke run without API.
+- Low-RAM build knobs `NEXT_BUILD_CPUS` / `NEXT_SKIP_TYPECHECK` (Dockerfile uses both).
+
+### Results (executed locally)
+
+| Check                                         | Result                                                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| lint / typecheck / format:check               | clean (tsc peak 462 MB)                                                                                   |
+| Vitest + coverage                             | 59 passed in 9 files; 85.48 % statements, 82.33 % branches, 79.8 % functions, 85.45 % lines (peak 494 MB) |
+| check:api                                     | `schema.d.ts` matches the server's `openapi.json`                                                         |
+| bun audit (high)                              | exit 0 (GHSA-vfj7-8cjw-p6xm ignored, dev-only, as in Phase 1)                                             |
+| build (1 worker, typecheck separate)          | passed, peak 558 MB                                                                                       |
+| Playwright E2E (real API)                     | 5/5 passed in 4.0 s, peak 615 MB                                                                          |
+| Docker image via server compose + proxy smoke | built; register 202, login 200, me 200, anonymous `/orgs` → 307 `/login?next=%2Forgs`                     |
+
+### Known limitations
+
+- No password reset / email verification (out of scope); no org switcher in the top bar yet (org selection page).
+- `src/proxy.ts` only checks cookie presence — UX, not security.
+- No CSP yet (P7).
+
+### Next (Phase 3)
+
+Project pages and ingestion keys on top of the org scope.

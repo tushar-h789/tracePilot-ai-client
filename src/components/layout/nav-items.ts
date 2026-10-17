@@ -1,5 +1,6 @@
 import {
   ActivityIcon,
+  Building2Icon,
   LayoutDashboardIcon,
   ScrollTextIcon,
   SettingsIcon,
@@ -17,6 +18,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/overview", label: "Overview", icon: LayoutDashboardIcon },
   { href: "/logs", label: "Logs", icon: ScrollTextIcon },
   { href: "/incidents", label: "Incidents", icon: SirenIcon },
+  { href: "/orgs", label: "Organizations", icon: Building2Icon },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ]
 
