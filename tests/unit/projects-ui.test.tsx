@@ -89,7 +89,7 @@ describe("ProjectsView", () => {
     expect(await screen.findByText("Checkout")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Settings for Checkout" })).toHaveAttribute(
       "href",
-      "/orgs/o1/projects/p1",
+      "/orgs/o1/projects/p1/settings",
     )
 
     await user.click(screen.getByRole("button", { name: "Archive Checkout" }))
