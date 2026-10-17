@@ -1,20 +1,17 @@
 import { expect, test } from "@playwright/test"
 
-test("login placeholder renders", async ({ page }) => {
+test("sign-in page renders an enabled form", async ({ page }) => {
   await page.goto("/login")
   await expect(page).toHaveTitle(/Sign in · TracePilot AI/)
-  await expect(page.getByText("Sign in", { exact: true }).first()).toBeVisible()
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeDisabled()
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible()
+  await expect(page.getByLabel("Email")).toBeEnabled()
+  await expect(page.getByRole("button", { name: "Sign in" })).toBeEnabled()
+  await expect(page.getByRole("link", { name: "Create one" })).toHaveAttribute("href", "/register")
 })
 
-test("home redirects to the overview inside the app shell", async ({ page }) => {
-  const response = await page.goto("/")
-  expect(response?.status()).toBeLessThan(400)
-  await expect(page).toHaveURL(/\/overview$/)
-  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible()
-  await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible()
-  // The status card resolves to one of its real states (API may or may not be running).
-  await expect(page.getByText(/All systems ready|Degraded|API unreachable/)).toBeVisible()
+test("signed-out visitors are sent to sign in", async ({ page }) => {
+  await page.goto("/")
+  await expect(page).toHaveURL(/\/login\?next=%2Foverview$/)
 })
 
 test("unknown routes render the not-found page", async ({ page }) => {
