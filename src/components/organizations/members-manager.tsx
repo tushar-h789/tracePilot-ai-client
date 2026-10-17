@@ -138,10 +138,18 @@ export function MembersManager({ orgId }: { orgId: string }) {
         title={org.name}
         description={`Members · your role: ${ROLE_LABELS[myRole]}`}
         actions={
-          <Link href="/orgs" className={buttonVariants({ variant: "outline", size: "sm" })}>
-            <ArrowLeftIcon aria-hidden="true" />
-            All organizations
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href={`/orgs/${orgId}/projects`}
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Projects
+            </Link>
+            <Link href="/orgs" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              <ArrowLeftIcon aria-hidden="true" />
+              All organizations
+            </Link>
+          </div>
         }
       />
       <FormAlert message={actionError} />

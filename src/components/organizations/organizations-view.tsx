@@ -1,6 +1,6 @@
 "use client"
 
-import { Building2Icon, UsersIcon } from "lucide-react"
+import { Building2Icon, FolderKanbanIcon, UsersIcon } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -77,6 +77,15 @@ export function OrganizationsView() {
                     <div className="flex shrink-0 items-center gap-2">
                       {last === org.id ? <Badge variant="outline">Last opened</Badge> : null}
                       <Badge variant="secondary">{ROLE_LABELS[org.role]}</Badge>
+                      <Link
+                        href={`/orgs/${org.id}/projects`}
+                        onClick={() => rememberOrg(org.id)}
+                        className={buttonVariants({ variant: "outline", size: "sm" })}
+                        aria-label={`Projects of ${org.name}`}
+                      >
+                        <FolderKanbanIcon aria-hidden="true" />
+                        Projects
+                      </Link>
                       <Link
                         href={`/orgs/${org.id}/members`}
                         onClick={() => rememberOrg(org.id)}
