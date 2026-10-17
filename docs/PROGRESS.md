@@ -253,3 +253,9 @@ Committed directly to `main`.
 - The project switcher lists the first 100 projects of the org.
 - The metrics doc link points at the server repo on GitHub.
 - Incidents are a placeholder until Phase 5.
+
+### Screenshots
+
+Captured from the demo org "TracePilot Demo (e2e)" / project "Demo Shop API" (synthetic data):
+`docs/screenshots/org-dashboard.png`, `project-overview.png`, `logs-explorer.png` (level=error), `log-detail.png`
+and `mobile-nav.png` (390×844).
